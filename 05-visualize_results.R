@@ -68,43 +68,38 @@ scores <- readRDS("04-models_by_bloc/models_by_bloc_scored.RDS") %>%
   ## Helpers functions ##
   #######################
   {
-    data_quality_pred <- function(x) {
+    add_quality <- function(x) {
       x %>%
-        group_by(calculated_level, level) %>%
-        summarise(volume = n()) %>%
-        as.data.frame() %>%
         mutate(quality = case_when(
           abs(level-calculated_level) == 0 ~ "Good",
           abs(level-calculated_level) == 1 ~ "Diff = 1",
           abs(level-calculated_level) > 1 ~ "Diff > 1"
         )) %>%
         mutate(quality = factor(quality, levels = c("Good", "Diff = 1", "Diff > 1")))
+    }
+    data_quality_pred <- function(x) {
+      x %>%
+        group_by(calculated_level, level) %>%
+        summarise(volume = n()) %>%
+        add_quality() %>%
+        as.data.frame()
+        
     }
     
     data_bloc_pred <- function(x) {
       x %>%
         group_by(calculated_level, level, calculated_bloc) %>%
         summarise(volume = n()) %>%
-        as.data.frame() %>%
-        mutate(quality = case_when(
-          abs(level-calculated_level) == 0 ~ "Good",
-          abs(level-calculated_level) == 1 ~ "Diff = 1",
-          abs(level-calculated_level) > 1 ~ "Diff > 1"
-        )) %>%
-        mutate(quality = factor(quality, levels = c("Good", "Diff = 1", "Diff > 1")))
+        add_quality() %>%
+        as.data.frame()
     }
     
     data_theoric_nls <- function(x) {
       x %>%
         group_by(x, level, calculated_level) %>%
         summarise(volume = n()) %>%
-        as.data.frame() %>%
-        mutate(quality = case_when(
-          abs(level-calculated_level) == 0 ~ "Good",
-          abs(level-calculated_level) == 1 ~ "Diff = 1",
-          abs(level-calculated_level) > 1 ~ "Diff > 1"
-        )) %>%
-        mutate(quality = factor(quality, levels = c("Good", "Diff = 1", "Diff > 1")))
+        add_quality() %>%
+        as.data.frame()
     }
     
     # Qualité des prédiction
@@ -123,7 +118,13 @@ scores <- readRDS("04-models_by_bloc/models_by_bloc_scored.RDS") %>%
     }
     
     # Courbe théorique du modèle nls
-    
+    plot_theoric <- function(x) {
+      ggplot(x, aes(x = x, y = origin_calculated_level)) +
+        geom_line() +
+        geom_point(aes(x = x, y = level, colour = quality)) +
+        scale_colour_manual(name = "Prediction quality", values = c("#229954", "#f5b041", "#e74c3c")) +
+        labs(x = "Duration (minutes)", y = "Calculated level (points) - Calculated level with decimal (line)")
+    }
   }
   
   #################################################
@@ -133,21 +134,15 @@ scores <- readRDS("04-models_by_bloc/models_by_bloc_scored.RDS") %>%
     # Run model
     df <- apply_bloc_model(x = bck_x, nb_of_blocs = 30, bloc_duration = 10, bloc_lost = 1)
     
-    # Qualité des prédiction
+    # Prediction quality
     plot_quality_pred(x = data_quality_pred(x = df))
     
-    # Courbe des bloc vs level
+    # Bloc versus Level
     plot_bloc_pred(x = data_bloc_pred(x = df))
     
-    # Plot the theoric calculated level with nls
-    plot_theoric <- function(x) {
-      tmp_data <- data_theoric_nls(x = x)
-      ggplot(data = tmp_data, aes(x = x, y = level)) +
-        geom_point(aes(size = volume, colour = quality)) +
-        geom_line(data = x, aes(x = x, y = origin_calculated_level)) +
-        scale_colour_manual(name = "Prediction quality", values = c("#229954", "#f5b041", "#e74c3c")) +
-        labs(x = "Duration (minutes)")
-    }
+    # Table bloc vs level
+    table(df$calculated_bloc, df$calculated_level)
+    
   }
   
   ################################################
@@ -158,16 +153,26 @@ scores <- readRDS("04-models_by_bloc/models_by_bloc_scored.RDS") %>%
     df <- apply_nls_model(x = bck_x, nb_of_blocs = 320, bloc_lost = 9) %>%
       rename(origin_calculated_level = calculated_level) %>%
       mutate(calculated_level = floor(origin_calculated_level)) %>%
-      mutate(calculated_bloc = round(origin_calculated_level, 1))
+      mutate(calculated_bloc = round(origin_calculated_level, 1)) %>%
+      add_quality()
+      
     
-    # Qualité des prédiction
+    # Prediction quality
     plot_quality_pred(x = data_quality_pred(x = df))
     
-    # Courbe des bloc vs level
-    plot_bloc_pred(x = data_bloc_pred(x = df))
+    # Calculated level versus Level
+    plot_bloc_pred(x = data_bloc_pred(x = df)) +
+      labs(x = "Calculated level")
     
-    # Courbe théorique
-    plot_theoric(x = df)
+    #  Duration versus Calculated Level (points) and with Calculated level with decimals (line)
+    plot_theoric(df)
+    
+    # Table duration versus calculated level
+    df %>%
+      arrange(x) %>%
+      mutate(origin_calculated_level = round(origin_calculated_level, 2)) %>%
+      distinct(x, origin_calculated_level) %>%
+      View()
   }
   
   

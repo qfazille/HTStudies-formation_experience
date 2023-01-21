@@ -1,0 +1,99 @@
+---
+title: "HT-Routines"
+author: "SkyRhum"
+date: "2023-01-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## TL;DR
+
+Pas le temps pour tout ce blabla, ils sont où les résultats ?
+[lien]
+
+## HT Studies
+
+### Concept
+
+HT Studies est une application CHPP permettant l'automatisation de la collecte d'information sur Hattrick dans le but de faciliter l'analyse (statistique ?) sur certains aspects du jeu.
+
+La 1ère (et unique) étude menée pour l'instant a pour objectif de comprendre le mécanisme (a priori déjà connu) de l'évolution des routines.
+Cette étude a été choisie puisque nous pensions que la récupération des données ainsi que leur analyse ne seraient pas trop compliqué et que ce serait un bon 1er exemple.
+Au fur et à mesure de l'analyse, nous avons rencontré un certains nombre d'incohérence dans les données ; certaines identifiées puis corrigée d'autre non. Par exemple :
+
+* Les forfaits
+* Modification de la routine après cartons rouges ou blessures non remplacés
+* Bugs divers (coucou Jean-Mi)
+
+Les données sont récoltés 2 fois par semaine (mardi & vendredi) pour les équipes ayant souscrites.
+
+### Objectif de l'étude
+
+Comprendre l'évolution 
+### Les données récoltés
+
+Pour ceux ayant installé l'extension, vous pouvez télécharger les données via le lien ci-dessous :
+
+<mettre capture ecran>
+
+Cela donne accès à un fichier `.zip` contenant 2 fichiers :
+
+* `FormationExperience.csv`
+* `FormationusePeriod.csv`
+
+#### FormationExperience.csv
+
+Ce 1er fichier contient 4 colonnes :
+
+* `team_id_hash`
+* `date`
+* `formation`
+* `level`
+
+Celui-ci permet d'avoir le **niveau** d'une **formation** pour une **équipe** à une **date** donnée.
+
+````{r, echo = F, eval = T}
+fe <- read.csv(file = "01-raw_data/FormationExperience.csv")
+head(fe)
+````
+
+#### FormationUsePeriod.csv
+
+Ce 2ème fichier contient les colonnes :
+
+* `team_id_hash`
+* `match_id_hash`
+* `match_date`
+* `formation`
+* `duration`
+
+````{r, echo = F, eval = T}
+fu <- read.csv(file = "01-raw_data/FormationUsePeriod.csv")
+head(fu)
+````
+
+Celui-ci permet d'avoir la **durée jouée** d'une **formation** par une **équipe** à une **match** et une **date** donnée.
+
+
+
+HTStudies a pour objectif l'aide
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
